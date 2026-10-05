@@ -1,76 +1,105 @@
 console.log("Inicio de la aplicacion");
-
 console.log(process.argv);
 
 const args = process.argv.slice(2);
 
-async function getProducts(url) {
-    try{
-        const response = await fetch(`https://fakestoreapi.com/${url}`)
-        const data = await response.json()
-        return data
-    }catch(error){
-        console.log(error)
-    }
+const API_BASE = "https://fakestoreapi.com";
+
+
+async function getAllProducts() {
+  const { ok, status, data } = await fetch(`${API_BASE}/products`, {
+    method: "GET",
+  });
+
+  if (!ok) throw new Error(`GET /products failed (${status})`);
+  return data;
 }
 
-async function deleteProduct(product){
-    try{
-        const response = await fetch(`https://fakestoreapi.com/${product}`,{
-            method: "DELETE"
-        })
-        const data = await response.json()
-        return data
-    }catch(error){
-        console.log(error)
-    }
+async function getProductById(id) {
+  const { ok, status, data } = await fetch(`${API_BASE}/products/${id}`, {
+    method: "GET",
+  });
+
+  if (!ok) throw new Error(`GET /products/${id} failed (${status})`);
+  return data;
 }
 
-async function createProduct(product){
-    try{
-        const response = await fetch("https://fakestoreapi.com/products",{
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(product)
-        })
-        if(response.ok){
-            const data = await response.json();
-            console.log(data)
-            console.log("product id: ", data.id)
-        }
-    }catch(error){
-        console.log(error)
-    }
+async function createProduct({ title, price, category }) {
+  const { ok, status, data } = await fetch(`${API_BASE}/products`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, price, category }),
+  });
+
+  if (!ok) throw new Error(`POST /products failed (${status})`);
+  return data;
 }
 
-switch(args[0]){
-    case "GET":
-        console.log(args[0]);
-        if(args[1] && args[1].startsWith("products")){
-            const products = await getProducts(args[1])
-            console.log(products)
-        }else{
-            console.log("incomplete or incorrect command");
-        }
-        break;
-    case "POST":
-        console.log(args[0]);
-        if(args[1] && args[2] && args[3] && args[4] && args[1] == "products"){
-            await createProduct({title: args[2], price: args[3], category: args[4]})
-            console.log("Product created")
-        }else{
-            console.log("incomplete or incorrect command")
-        }
-        break;
-    case "DELETE":
-        console.log(args[0]);
-        if(args[1].startsWith("products/") && args[1].length > 9){
-            const response = await deleteProduct(args[1]);
-            console.log("Product deleted ", response)
-        }else{
-            console.log("incomplete or incorrect command")
-        }
-        break;
+async function deleteProduct(id) {
+  const { ok, status, data } = await fetch(`${API_BASE}/products/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!ok) throw new Error(`DELETE /products/${id} failed (${status})`);
+  return data;
+}
+
+async function main() {
+  const [method, route, ...rest] = args;
+
+  switch (method) {
+    case "GET": {
+      if (route === "products") {
+        const products = await getAllProducts();
+        console.log(products);
+        return;
+      }
+
+      if (route && route.startsWith("products/")) {
+        const id = route.split("/")[1];
+        const product = await getProductById(id);
+        console.log(product);
+        return;
+      }
+
+      console.log("GET command incomplete or incorrect");
+      return;
+    }
+
+    case "POST": {
+      if (route !== "products") {
+        console.log("POST command incomplete or incorrect");
+        return;
+      }
+
+      const [title, priceRaw, category] = rest;
+      const price = Number(priceRaw);
+      if (!title || Number.isNaN(price) || !category) {
+        console.log("Information missing or incorrect for creating a product. Please provide title, price, and category.");
+        return;
+      }
+
+      const created = await createProduct({ title, price, category });
+      console.log(created);
+      console.log("product id:", created.id);
+      return;
+    }
+
+    case "DELETE": {
+      if (route && route.startsWith("products/")) {
+        const id = route.split("/")[1];
+        const result = await deleteProduct(id);
+        console.log("Product deleted:", result);
+        return;
+      }
+
+      console.log("DELETE command incomplete or incorrect");
+      return;
+    }
+
     default:
-        console.log("incomplete or incorrect command")
+      console.log("Command incomplete or incorrect");
+  }
 }
+
+main().catch((err) => console.error("Fatal:", err.message));
