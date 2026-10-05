@@ -1,0 +1,22 @@
+{
+  "name": "backendnode_26225_lenschen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lety1585/BackendNode_26225.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Lety1585/BackendNode_26225/issues"
+  },
+  "homepage": "https://github.com/Lety1585/BackendNode_26225#readme"
+}
